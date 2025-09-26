@@ -1,0 +1,39 @@
+{
+  "Version": 1,
+  "Hash": "5tUuRWegKdASu8fHrTQPlfzsU1JiSM/G5/wGb/lmeQI=",
+  "Source": "AVAssistant",
+  "BasePath": "_content/AVAssistant",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "AVAssistant\\wwwroot",
+      "Source": "AVAssistant",
+      "ContentRoot": "C:\\Git\\AVAssistant\\wwwroot\\",
+      "BasePath": "_content/AVAssistant",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": [
+    {
+      "Identity": "C:\\Git\\AVAssistant\\wwwroot\\index.html",
+      "SourceId": "AVAssistant",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Git\\AVAssistant\\wwwroot\\",
+      "BasePath": "_content/AVAssistant",
+      "RelativePath": "index.html",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\index.html"
+    }
+  ]
+}

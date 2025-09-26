@@ -1,0 +1,25 @@
+{
+  "Files": [
+    {
+      "Id": "C:\\Git\\AVAssistant\\wwwroot\\index.html",
+      "PackagePath": "staticwebassets\\index.html"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.AVAssistant.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.build.AVAssistant.props",
+      "PackagePath": "build\\AVAssistant.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildMultiTargeting.AVAssistant.props",
+      "PackagePath": "buildMultiTargeting\\AVAssistant.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildTransitive.AVAssistant.props",
+      "PackagePath": "buildTransitive\\AVAssistant.props"
+    }
+  ],
+  "ElementsToRemove": []
+}
