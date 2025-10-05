@@ -1,0 +1,269 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>AV Browser</title>
+    <style>
+        body {
+            font-family: Arial;
+            margin: 0;
+        }
+
+        .container {
+            display: flex;
+            height: 80vh;
+        }
+
+        /* 左側 35% */
+        .left {
+            width: 35%;
+            padding: 10px;
+        }
+
+        /* 左側 2x2 Grid */
+        .grid-left {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 10px;
+            height: 100%;
+        }
+
+        .section {
+            border: 1px solid #ccc;
+            padding: 5px;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+            .section input[type="text"] {
+                width: 90%;
+                margin-bottom: 5px;
+                position: sticky;
+                top: 0;
+                background-color: #fff;
+                z-index: 10;
+                padding: 2px 4px;
+                border: 1px solid #ccc;
+            }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex: 1;
+            overflow: auto;
+        }
+
+        li {
+            cursor: pointer;
+            padding: 4px;
+        }
+
+            li:hover {
+                background-color: #efefef;
+            }
+
+        /* 右側 65% */
+        .right {
+            width: 65%;
+            padding: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+            /* 右側標題固定在上方 */
+            .right h3 {
+                margin: 0 0 10px 0;
+                text-align: center;
+            }
+
+        /* 右側圖片 */
+        #poster {
+            max-width: 100%;
+            max-height: calc(100% - 30px); /* 扣掉標題空間 */
+            border: 1px solid #ccc;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: block;
+            margin: 0 auto; /* 水平置中 */
+        }
+
+            /* 放大樣式 */
+            #poster.enlarged {
+                width: 200%;
+                height: calc(100% - 30px);
+                object-fit: contain;
+            }
+    </style>
+</head>
+<body>
+
+    <h2>AV Browser</h2>
+
+    <div>
+        <input type="text" id="rootInput" value="D:\, F:\EMBY" style="width:400px;">
+        <button onclick="loadFolders()">載入資料夾</button>
+        <span id="folderCount">資料夾數量:0</span>
+    </div>
+
+    <div class="container">
+        <div class="left">
+            <div class="grid-left">
+                <div class="section" id="folderSection">
+                    <h3>資料夾清單</h3>
+                    <input type="text" id="folderFilter" placeholder="輸入正則篩選資料夾" oninput="applyFilters()">
+                    <ul id="folderList"></ul>
+                </div>
+                <div class="section" id="actressSection">
+                    <h3>女優清單</h3>
+                    <input type="text" id="actressFilter" placeholder="輸入正則篩選女優" oninput="applyFilters()">
+                    <ul id="actressList"></ul>
+                </div>
+                <div class="section" id="fileSection">
+                    <h3>檔案清單</h3>
+                    <ul id="fileList"></ul>
+                </div>
+                <div class="section" id="actressWorksSection">
+                    <h3>女優作品</h3>
+                    <ul id="actressWorks"></ul>
+                </div>
+            </div>
+        </div>
+        <div class="right">
+            <h3>預覽</h3>
+            <img id="poster" src="">
+        </div>
+    </div>
+
+    <script>
+        let foldersGlobal = [];
+        let actressDictGlobal = {};
+
+        async function loadFolders() {
+            const input = document.getElementById("rootInput").value;
+            if (!input) { alert("請輸入至少一個硬碟路徑"); return; }
+
+            const res = await fetch(`/api/files/folders?rootPaths=${encodeURIComponent(input)}`);
+            if (!res.ok) { alert("載入資料夾失敗"); return; }
+            const data = await res.json();
+
+            foldersGlobal = data.folders;
+            actressDictGlobal = data.actressDict;
+
+            applyFilters();
+            document.getElementById("folderCount").textContent = "資料夾數量:" + data.count;
+        }
+
+        function applyFilters() {
+            const folderFilter = document.getElementById("folderFilter").value;
+            const actressFilter = document.getElementById("actressFilter").value;
+
+            const folderList = document.getElementById("folderList");
+            folderList.innerHTML = "";
+            let folderRegex = null;
+            try { folderRegex = new RegExp(folderFilter, "i"); } catch { }
+            foldersGlobal.forEach(f => {
+                if (!folderRegex || folderRegex.test(f)) {
+                    const li = document.createElement("li");
+                    li.textContent = f;
+                    li.onclick = () => loadFiles(f);
+                    folderList.appendChild(li);
+                }
+            });
+
+            const actressList = document.getElementById("actressList");
+            actressList.innerHTML = "";
+            let actressRegex = null;
+            try { actressRegex = new RegExp(actressFilter, "i"); } catch { }
+            Object.keys(actressDictGlobal).sort().forEach(actress => {
+                if (!actressRegex || actressRegex.test(actress)) {
+                    const li = document.createElement("li");
+                    li.textContent = actress;
+                    li.onclick = () => showActressWorks(actress, true);
+                    actressList.appendChild(li);
+                }
+            });
+        }
+
+        async function loadFiles(folderPath) {
+            const res = await fetch(`/api/files/all?folderPath=${encodeURIComponent(folderPath)}`);
+            if (!res.ok) { alert("載入檔案失敗"); return; }
+            const files = await res.json();
+
+            const fileList = document.getElementById("fileList");
+            fileList.innerHTML = "";
+            let firstImageSet = false;
+
+            files.forEach(f => {
+                const li = document.createElement("li");
+                li.textContent = f;
+                if (/\.(mp4|mpg|mkv|avi|wmv)$/i.test(f)) {
+                    li.ondblclick = () => playMovie(f);
+                } else if (/\.jpg$/i.test(f)) {
+                    li.onclick = () => document.getElementById("poster").src = `/api/files/image?filePath=${encodeURIComponent(f)}&t=${Date.now()}`;
+                    if (!firstImageSet) {
+                        document.getElementById("poster").src = `/api/files/image?filePath=${encodeURIComponent(f)}&t=${Date.now()}`;
+                        firstImageSet = true;
+                    }
+                }
+                fileList.appendChild(li);
+            });
+        }
+
+        async function showActressWorks(actress, autoPreview = false) {
+            const worksList = document.getElementById("actressWorks");
+            worksList.innerHTML = "";
+            const folders = actressDictGlobal[actress] || [];
+
+            let firstJpgSet = false;
+
+            for (const folder of folders) {
+                const li = document.createElement("li");
+                li.textContent = folder;
+                li.onclick = () => loadFiles(folder);
+                worksList.appendChild(li);
+
+                if (autoPreview && !firstJpgSet) {
+                    const res = await fetch(`/api/files/all?folderPath=${encodeURIComponent(folder)}`);
+                    if (res.ok) {
+                        const files = await res.json();
+                        const jpgFile = files.find(f => /\.jpg$/i.test(f));
+                        if (jpgFile) {
+                            document.getElementById("poster").src = `/api/files/image?filePath=${encodeURIComponent(jpgFile)}&t=${Date.now()}`;
+                            firstJpgSet = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        async function playMovie(filePath) {
+            await fetch(`/api/files/play`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(filePath)
+            });
+        }
+
+        // 點擊圖片放大/縮小
+        const poster = document.getElementById("poster");
+        poster.addEventListener("click", (e) => {
+            e.stopPropagation();
+            poster.classList.toggle("enlarged");
+        });
+
+        // 點擊空白區縮回
+        document.body.addEventListener("click", () => {
+            poster.classList.remove("enlarged");
+        });
+
+        // 自動載入預設資料夾
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFolders();
+        });
+    </script>
+
+</body>
+</html>

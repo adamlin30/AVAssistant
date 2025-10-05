@@ -1,0 +1,6 @@
+@AVAssistant_HostAddress = http://localhost:5182
+
+GET {{AVAssistant_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
