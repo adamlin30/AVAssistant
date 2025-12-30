@@ -3,24 +3,84 @@
 <head>
     <meta charset="utf-8">
     <title>AV Browser</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        body {
-            font-family: Arial;
-            margin: 0;
+        /* 深色模式變數 */
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --bg-hover: #efefef;
+            --bg-section: #ffffff;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --border-color: #ccc;
+            --highlight-color: #4a90e2;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 8px rgba(0,0,0,0.15);
+            --shadow-lg: 0 8px 16px rgba(0,0,0,0.2);
         }
+
+        body.dark-mode {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2a2a2a;
+            --bg-hover: #3a3a3a;
+            --bg-section: #252525;
+            --text-primary: #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --border-color: #444;
+            --highlight-color: #5a9fe2;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.3);
+            --shadow-md: 0 4px 8px rgba(0,0,0,0.4);
+            --shadow-lg: 0 8px 16px rgba(0,0,0,0.5);
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        h2, h3 {
+            color: var(--text-primary);
+        }
+
+        input[type="text"] {
+            background-color: var(--bg-section);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        button {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+            button:hover {
+                background-color: var(--bg-hover);
+                box-shadow: var(--shadow-sm);
+            }
+
+            button:active {
+                transform: translateY(1px);
+            }
 
         .container {
             display: flex;
             height: 80vh;
         }
 
-        /* 左側 35% */
         .left {
             width: 35%;
             padding: 10px;
         }
 
-        /* 左側 2x2 Grid */
         .grid-left {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -30,22 +90,39 @@
         }
 
         .section {
-            border: 1px solid #ccc;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-section);
             padding: 5px;
             overflow: auto;
             display: flex;
             flex-direction: column;
+            border-radius: 8px;
+            box-shadow: var(--shadow-md);
+            transition: box-shadow 0.3s;
         }
+
+            .section:hover {
+                box-shadow: var(--shadow-lg);
+            }
 
             .section input[type="text"] {
                 width: 90%;
                 margin-bottom: 5px;
                 position: sticky;
                 top: 0;
-                background-color: #fff;
+                background-color: var(--bg-section);
+                color: var(--text-primary);
                 z-index: 10;
-                padding: 2px 4px;
-                border: 1px solid #ccc;
+                padding: 6px 8px;
+                border: 1px solid var(--border-color);
+                border-radius: 4px;
+            }
+
+            .section h3 {
+                margin: 0 0 10px 0;
+                padding-bottom: 8px;
+                border-bottom: 2px solid var(--highlight-color);
+                color: var(--text-primary);
             }
 
         ul {
@@ -59,43 +136,362 @@
         li {
             cursor: pointer;
             padding: 4px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
         }
 
             li:hover {
-                background-color: #efefef;
+                background-color: var(--bg-hover);
             }
 
-        /* 右側 65% */
+            li.highlighted {
+                background-color: var(--highlight-color) !important;
+                color: white;
+            }
+
+        #folderList li {
+            font-size: 11pt;
+        }
+
+        #fileList li {
+            font-size: 11pt;
+        }
+
+        #actressList li {
+            font-size: 11pt;
+        }
+
+        #actressWorks li {
+            font-size: 11pt;
+        }
+
         .right {
             width: 65%;
             padding: 10px;
             overflow: hidden;
             position: relative;
+            background-color: var(--bg-section);
+            border-radius: 8px;
+            box-shadow: var(--shadow-md);
         }
 
-            /* 右側標題固定在上方 */
             .right h3 {
                 margin: 0 0 10px 0;
                 text-align: center;
+                color: var(--text-primary);
+                padding-bottom: 8px;
+                border-bottom: 2px solid var(--highlight-color);
             }
 
-        /* 右側圖片 */
         #poster {
             max-width: 100%;
-            max-height: calc(100% - 30px); /* 扣掉標題空間 */
-            border: 1px solid #ccc;
+            max-height: calc(100% - 30px);
+            border: 1px solid var(--border-color);
             cursor: pointer;
             transition: all 0.3s ease;
             display: block;
-            margin: 0 auto; /* 水平置中 */
+            margin: 0 auto;
+            border-radius: 8px;
+            box-shadow: var(--shadow-md);
         }
 
-            /* 放大樣式 */
             #poster.enlarged {
                 width: 200%;
                 height: calc(100% - 30px);
                 object-fit: contain;
             }
+
+        /* 統計/歷史視窗樣式 */
+        .stats-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .stats-modal {
+            background-color: var(--bg-section);
+            color: var(--text-primary);
+            padding: 30px;
+            border-radius: 12px;
+            width: 80%;
+            max-width: 1200px;
+            max-height: 85%;
+            overflow: auto;
+            box-shadow: var(--shadow-lg);
+        }
+
+            .stats-modal h2 {
+                margin-top: 0;
+                color: var(--text-primary);
+                border-bottom: 2px solid var(--highlight-color);
+                padding-bottom: 10px;
+            }
+
+        .stats-section {
+            margin: 20px 0;
+        }
+
+            .stats-section h3 {
+                color: var(--highlight-color);
+                margin-bottom: 10px;
+            }
+
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+            .stats-table th,
+            .stats-table td {
+                padding: 8px;
+                text-align: left;
+                border-bottom: 1px solid var(--border-color);
+                color: var(--text-primary);
+            }
+
+            .stats-table th {
+                background-color: var(--bg-secondary);
+                font-weight: bold;
+            }
+
+            .stats-table tr:hover {
+                background-color: var(--bg-hover);
+            }
+
+        .close-stats {
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+            .close-stats:hover {
+                color: var(--text-primary);
+            }
+
+        /* 統計標籤樣式 */
+        .stats-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0;
+        }
+
+        .stats-tab {
+            padding: 10px 20px;
+            background-color: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            margin-bottom: -2px;
+        }
+
+            .stats-tab:hover {
+                background-color: var(--bg-hover);
+                border-bottom-color: var(--text-secondary);
+            }
+
+            .stats-tab.active {
+                border-bottom-color: var(--highlight-color);
+                color: var(--highlight-color);
+                font-weight: bold;
+            }
+
+        .stats-tab-content {
+            display: none;
+        }
+
+            .stats-tab-content.active {
+                display: block;
+            }
+
+        canvas {
+            max-height: 400px;
+            background-color: var(--bg-section);
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        /* 儀表板樣式 */
+        .dashboard {
+            margin: 20px 10px;
+            background-color: var(--bg-section);
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+            .dashboard.collapsed .dashboard-content {
+                display: none;
+            }
+
+            .dashboard.collapsed .dashboard-collapse::before {
+                content: "▼ 展開";
+            }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, var(--highlight-color), #6bb5ff);
+            color: white;
+        }
+
+            .dashboard-header h3 {
+                margin: 0;
+                color: white;
+                border: none;
+            }
+
+        .dashboard-collapse {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+            .dashboard-collapse:hover {
+                background-color: rgba(255, 255, 255, 0.3);
+            }
+
+        .dashboard-content {
+            padding: 20px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background-color: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+            .stat-card:hover {
+                transform: translateY(-5px);
+                box-shadow: var(--shadow-md);
+                border-color: var(--highlight-color);
+            }
+
+            .stat-card.highlight {
+                background: linear-gradient(135deg, rgba(74, 144, 226, 0.1), rgba(107, 181, 255, 0.1));
+                border-color: var(--highlight-color);
+            }
+
+        .stat-icon {
+            font-size: 36px;
+            line-height: 1;
+        }
+
+        .stat-info {
+            flex: 1;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--highlight-color);
+            line-height: 1.2;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .dashboard-quick-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .quick-info-section {
+            background-color: var(--bg-secondary);
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+            .quick-info-section h4 {
+                margin: 0 0 10px 0;
+                color: var(--text-primary);
+                font-size: 14px;
+                padding-bottom: 8px;
+                border-bottom: 2px solid var(--highlight-color);
+            }
+
+            .quick-info-section ul {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+
+            .quick-info-section li {
+                padding: 8px 0;
+                border-bottom: 1px solid var(--border-color);
+                font-size: 14px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+                .quick-info-section li:last-child {
+                    border-bottom: none;
+                }
+
+                .quick-info-section li:hover {
+                    background-color: transparent;
+                    color: var(--highlight-color);
+                }
+
+        .habit-item {
+            padding: 8px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .habit-label {
+            color: var(--text-secondary);
+        }
+
+        .habit-value {
+            color: var(--highlight-color);
+            font-weight: bold;
+        }
+
+        #miniTrendChart {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -106,6 +502,123 @@
         <input type="text" id="rootInput" value="D:\, F:\EMBY" style="width:400px;">
         <button onclick="loadFolders()">載入資料夾</button>
         <span id="folderCount">資料夾數量:0</span>
+        <button onclick="showStatistics()" style="margin-left: 20px;">📊 查看統計</button>
+        <button onclick="clearStatistics()" style="margin-left: 10px;">🗑️ 清除統計</button>
+        <button onclick="toggleDarkMode()" style="margin-left: 20px;">🌓 深色模式</button>
+        <button onclick="showHistory()" style="margin-left: 10px;">📜 搜尋歷史</button>
+        <button onclick="toggleDashboard()" style="margin-left: 10px;">📋 儀表板</button>
+    </div>
+
+    <!-- 儀表板 -->
+    <div id="dashboard" class="dashboard">
+        <div class="dashboard-header">
+            <h3>📊 儀表板總覽</h3>
+            <button class="dashboard-collapse" onclick="toggleDashboard()">▲ 收起</button>
+        </div>
+        <div class="dashboard-content">
+            <div class="dashboard-grid">
+                <!-- 統計卡片 -->
+                <div class="stat-card">
+                    <div class="stat-icon">🎬</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-total-movies">0</div>
+                        <div class="stat-label">總影片數</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">👩</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-total-actresses">0</div>
+                        <div class="stat-label">總女優數</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">📁</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-total-folders">0</div>
+                        <div class="stat-label">資料夾數</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">▶️</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-total-plays">0</div>
+                        <div class="stat-label">總播放次數</div>
+                    </div>
+                </div>
+
+                <div class="stat-card highlight">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-today-plays">0</div>
+                        <div class="stat-label">今日觀看</div>
+                    </div>
+                </div>
+
+                <div class="stat-card highlight">
+                    <div class="stat-icon">📆</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-week-plays">0</div>
+                        <div class="stat-label">本週觀看</div>
+                    </div>
+                </div>
+
+                <div class="stat-card highlight">
+                    <div class="stat-icon">🗓️</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-month-plays">0</div>
+                        <div class="stat-label">本月觀看</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">🕐</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-avg-per-day">0</div>
+                        <div class="stat-label">日均觀看</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 快速資訊區 -->
+            <div class="dashboard-quick-info">
+                <div class="quick-info-section">
+                    <h4>🌟 最愛女優 (Top 3)</h4>
+                    <ul id="top-actresses-quick"></ul>
+                </div>
+
+                <div class="quick-info-section">
+                    <h4>🔥 最近熱門 (Top 3)</h4>
+                    <ul id="recent-hot-quick"></ul>
+                </div>
+
+                <div class="quick-info-section">
+                    <h4>📊 觀看習慣</h4>
+                    <div id="viewing-habits">
+                        <div class="habit-item">
+                            <span class="habit-label">最活躍時段：</span>
+                            <span class="habit-value" id="peak-hour">--</span>
+                        </div>
+                        <div class="habit-item">
+                            <span class="habit-label">最愛類型：</span>
+                            <span class="habit-value" id="fav-genre">分析中...</span>
+                        </div>
+                        <div class="habit-item">
+                            <span class="habit-label">平均評分：</span>
+                            <span class="habit-value" id="avg-rating">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-info-section">
+                    <h4>📈 統計趨勢</h4>
+                    <canvas id="miniTrendChart" style="max-height: 150px;"></canvas>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="container">
@@ -137,9 +650,164 @@
         </div>
     </div>
 
+    <!-- 統計視窗 -->
+    <div id="statsOverlay" class="stats-overlay" onclick="closeStatistics(event)">
+        <div class="stats-modal" onclick="event.stopPropagation()">
+            <span class="close-stats" onclick="closeStatistics()">&times;</span>
+            <h2>📊 使用統計</h2>
+
+            <div class="stats-tabs">
+                <button class="stats-tab active" onclick="switchStatsTab('overview')">📊 總覽</button>
+                <button class="stats-tab" onclick="switchStatsTab('trends')">📈 觀看趨勢</button>
+                <button class="stats-tab" onclick="switchStatsTab('rankings')">🏆 排行榜</button>
+                <button class="stats-tab" onclick="switchStatsTab('actress')">👩 女優統計</button>
+            </div>
+
+            <div id="stats-overview" class="stats-tab-content active">
+                <div class="stats-section">
+                    <h3>🎬 最常播放的影片 (Top 20)</h3>
+                    <table class="stats-table" id="movieStatsTable">
+                        <thead>
+                            <tr>
+                                <th>排名</th>
+                                <th>女優</th>
+                                <th>影片名稱</th>
+                                <th>播放次數</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="stats-section">
+                    <h3>👩 最常查看的女優 (Top 20)</h3>
+                    <table class="stats-table" id="actressStatsTable">
+                        <thead>
+                            <tr>
+                                <th>排名</th>
+                                <th>女優名稱</th>
+                                <th>查看次數</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="stats-trends" class="stats-tab-content">
+                <div class="stats-section">
+                    <h3>📈 每日觀看趨勢（最近 30 天）</h3>
+                    <canvas id="dailyTrendChart"></canvas>
+                </div>
+                <div class="stats-section">
+                    <h3>📊 每週觀看趨勢（最近 12 週）</h3>
+                    <canvas id="weeklyTrendChart"></canvas>
+                </div>
+                <div class="stats-section">
+                    <h3>🕒 觀看時段分佈</h3>
+                    <canvas id="hourlyChart"></canvas>
+                </div>
+            </div>
+
+            <div id="stats-rankings" class="stats-tab-content">
+                <div class="stats-section">
+                    <h3>🔥 本週熱門影片 (Top 10)</h3>
+                    <table class="stats-table" id="weeklyMovieRanking">
+                        <thead>
+                            <tr>
+                                <th>排名</th>
+                                <th>女優</th>
+                                <th>影片名稱</th>
+                                <th>播放次數</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="stats-section">
+                    <h3>📅 本月熱門影片 (Top 10)</h3>
+                    <table class="stats-table" id="monthlyMovieRanking">
+                        <thead>
+                            <tr>
+                                <th>排名</th>
+                                <th>女優</th>
+                                <th>影片名稱</th>
+                                <th>播放次數</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="stats-section">
+                    <h3>⭐ 評分最高影片 (Top 10)</h3>
+                    <table class="stats-table" id="topRatedRanking">
+                        <thead>
+                            <tr>
+                                <th>排名</th>
+                                <th>女優</th>
+                                <th>影片名稱</th>
+                                <th>播放次數</th>
+                                <th>評分</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="stats-actress" class="stats-tab-content">
+                <div class="stats-section">
+                    <h3>👩 女優作品統計</h3>
+                    <table class="stats-table" id="actressDetailStats">
+                        <thead>
+                            <tr>
+                                <th>排名</th>
+                                <th>女優名稱</th>
+                                <th>作品數量</th>
+                                <th>總播放次數</th>
+                                <th>查看次數</th>
+                                <th>平均播放率</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="stats-section">
+                    <h3>📊 女優觀看次數分佈 (Top 10)</h3>
+                    <canvas id="actressViewChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 搜尋歷史視窗 -->
+    <div id="historyOverlay" class="stats-overlay" onclick="closeHistory(event)">
+        <div class="stats-modal" onclick="event.stopPropagation()">
+            <span class="close-stats" onclick="closeHistory()">&times;</span>
+            <h2>📜 搜尋歷史</h2>
+
+            <div class="stats-section">
+                <h3>📁 最近瀏覽的資料夾 (最近 20 個)</h3>
+                <div id="folderHistory"></div>
+            </div>
+
+            <div class="stats-section">
+                <h3>👩 最近查看的女優 (最近 20 個)</h3>
+                <div id="actressHistory"></div>
+            </div>
+
+            <button onclick="clearHistory()" style="margin-top: 20px;">🗑️ 清除所有歷史</button>
+        </div>
+    </div>
+
     <script>
         let foldersGlobal = [];
         let actressDictGlobal = {};
+        let currentFocusedSection = null;
+
+        let movieStats = JSON.parse(localStorage.getItem('movieStats') || '{}');
+        let actressStats = JSON.parse(localStorage.getItem('actressStats') || '{}');
+        let folderHistory = JSON.parse(localStorage.getItem('folderHistory') || '[]');
+        let actressHistory = JSON.parse(localStorage.getItem('actressHistory') || '[]');
 
         async function loadFolders() {
             const input = document.getElementById("rootInput").value;
@@ -154,6 +822,50 @@
 
             applyFilters();
             document.getElementById("folderCount").textContent = "資料夾數量:" + data.count;
+
+            // 更新儀表板
+            updateDashboard();
+        }
+
+        function extractActressFromFolder(folderPath) {
+            const folderName = folderPath.split('\\').pop().split('/').pop();
+            const match = folderName.match(/^[A-Za-z]+-\d+\s*-\s*(.+)$/);
+            if (match && match[1]) {
+                const actressName = match[1].trim();
+                console.log(`成功提取女優名: "${actressName}" from "${folderName}"`);
+                return actressName;
+            }
+            console.log(`無法提取女優名 from "${folderName}"`);
+            return null;
+        }
+
+        function findAndHighlightActress(actressName) {
+            const actressList = document.getElementById("actressList");
+            const items = actressList.querySelectorAll('li');
+
+            for (const item of items) {
+                if (item.textContent === actressName) {
+                    highlightItem(item, 'actressList');
+                    actressStats[actressName] = (actressStats[actressName] || 0) + 1;
+                    localStorage.setItem('actressStats', JSON.stringify(actressStats));
+                    return true;
+                }
+            }
+
+            for (const item of items) {
+                if (item.textContent.includes(actressName) || actressName.includes(item.textContent)) {
+                    highlightItem(item, 'actressList');
+                    const actualName = item.textContent;
+                    actressStats[actualName] = (actressStats[actualName] || 0) + 1;
+                    localStorage.setItem('actressStats', JSON.stringify(actressStats));
+                    console.log(`部分匹配成功: "${actressName}" -> "${actualName}"`);
+                    return true;
+                }
+            }
+
+            console.log(`找不到女優: "${actressName}"`);
+            console.log('可用的女優清單:', Array.from(items).map(i => i.textContent));
+            return false;
         }
 
         function applyFilters() {
@@ -168,7 +880,35 @@
                 if (!folderRegex || folderRegex.test(f)) {
                     const li = document.createElement("li");
                     li.textContent = f;
-                    li.onclick = () => loadFiles(f);
+                    li.onclick = (e) => {
+                        highlightItem(li, 'folderList');
+                        loadFiles(f);
+                    };
+                    li.oncontextmenu = async (e) => {
+                        e.preventDefault();
+                        highlightItem(li, 'folderList');
+
+                        const actress = extractActressFromFolder(f);
+                        console.log(`資料夾: ${f}`);
+                        console.log(`提取的女優名: ${actress}`);
+
+                        if (actress) {
+                            const found = findAndHighlightActress(actress);
+                            if (found) {
+                                const actualActress = await showActressWorks(actress, true);
+                                const folders = actressDictGlobal[actualActress];
+                                if (folders && folders.length > 0) {
+                                    console.log(`載入第一個作品: ${folders[0]}`);
+                                    await loadFiles(folders[0]);
+                                }
+                            } else {
+                                alert(`找不到女優 "${actress}"，可能名稱不在女優清單中`);
+                            }
+                        } else {
+                            alert('無法從資料夾名稱提取女優名稱\n資料夾格式應為: "ABC-123 - 女優名"');
+                        }
+                    };
+                    li._previewAction = () => loadFiles(f);
                     folderList.appendChild(li);
                 }
             });
@@ -181,13 +921,27 @@
                 if (!actressRegex || actressRegex.test(actress)) {
                     const li = document.createElement("li");
                     li.textContent = actress;
-                    li.onclick = () => showActressWorks(actress, true);
+                    li.onclick = (e) => {
+                        highlightItem(li, 'actressList');
+                        actressStats[actress] = (actressStats[actress] || 0) + 1;
+                        localStorage.setItem('actressStats', JSON.stringify(actressStats));
+                        addToHistory(actressHistory, actress, 'actressHistory');
+                        showActressWorks(actress, true);
+                    };
+                    li._previewAction = () => {
+                        actressStats[actress] = (actressStats[actress] || 0) + 1;
+                        localStorage.setItem('actressStats', JSON.stringify(actressStats));
+                        addToHistory(actressHistory, actress, 'actressHistory');
+                        showActressWorks(actress, true);
+                    };
                     actressList.appendChild(li);
                 }
             });
         }
 
         async function loadFiles(folderPath) {
+            addToHistory(folderHistory, folderPath, 'folderHistory');
+
             const res = await fetch(`/api/files/all?folderPath=${encodeURIComponent(folderPath)}`);
             if (!res.ok) { alert("載入檔案失敗"); return; }
             const files = await res.json();
@@ -199,10 +953,21 @@
             files.forEach(f => {
                 const li = document.createElement("li");
                 li.textContent = f;
+
                 if (/\.(mp4|mpg|mkv|avi|wmv)$/i.test(f)) {
+                    li.onclick = (e) => {
+                        highlightItem(li, 'fileList');
+                    };
                     li.ondblclick = () => playMovie(f);
+                    li._action = () => playMovie(f);
                 } else if (/\.jpg$/i.test(f)) {
-                    li.onclick = () => document.getElementById("poster").src = `/api/files/image?filePath=${encodeURIComponent(f)}&t=${Date.now()}`;
+                    li.onclick = (e) => {
+                        highlightItem(li, 'fileList');
+                        document.getElementById("poster").src = `/api/files/image?filePath=${encodeURIComponent(f)}&t=${Date.now()}`;
+                    };
+                    li._previewAction = () => {
+                        document.getElementById("poster").src = `/api/files/image?filePath=${encodeURIComponent(f)}&t=${Date.now()}`;
+                    };
                     if (!firstImageSet) {
                         document.getElementById("poster").src = `/api/files/image?filePath=${encodeURIComponent(f)}&t=${Date.now()}`;
                         firstImageSet = true;
@@ -215,14 +980,28 @@
         async function showActressWorks(actress, autoPreview = false) {
             const worksList = document.getElementById("actressWorks");
             worksList.innerHTML = "";
-            const folders = actressDictGlobal[actress] || [];
+
+            let actualActress = actress;
+            for (const key in actressDictGlobal) {
+                if (key === actress || key.includes(actress) || actress.includes(key)) {
+                    actualActress = key;
+                    break;
+                }
+            }
+
+            const folders = actressDictGlobal[actualActress] || [];
+            console.log(`顯示女優作品: ${actualActress}, 作品數量: ${folders.length}`);
 
             let firstJpgSet = false;
 
             for (const folder of folders) {
                 const li = document.createElement("li");
                 li.textContent = folder;
-                li.onclick = () => loadFiles(folder);
+                li.onclick = (e) => {
+                    highlightItem(li, 'actressWorks');
+                    loadFiles(folder);
+                };
+                li._previewAction = () => loadFiles(folder);
                 worksList.appendChild(li);
 
                 if (autoPreview && !firstJpgSet) {
@@ -237,32 +1016,941 @@
                     }
                 }
             }
+
+            return actualActress;
         }
 
         async function playMovie(filePath) {
+            if (!movieStats[filePath]) {
+                movieStats[filePath] = {
+                    count: 0,
+                    path: filePath,
+                    playDates: []
+                };
+            }
+            movieStats[filePath].count += 1;
+            movieStats[filePath].playDates.push(Date.now());
+            localStorage.setItem('movieStats', JSON.stringify(movieStats));
+
             await fetch(`/api/files/play`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(filePath)
             });
+
+            // 更新儀表板
+            updateDashboard();
         }
 
-        // 點擊圖片放大/縮小
+        function highlightItem(item, listId) {
+            const list = document.getElementById(listId);
+            list.querySelectorAll('li').forEach(li => li.classList.remove('highlighted'));
+            item.classList.add('highlighted');
+            currentFocusedSection = listId;
+            item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT') return;
+
+            if (!currentFocusedSection) {
+                currentFocusedSection = 'folderList';
+            }
+
+            const list = document.getElementById(currentFocusedSection);
+            if (!list) return;
+
+            const items = Array.from(list.querySelectorAll('li'));
+            if (items.length === 0) return;
+
+            const currentHighlighted = list.querySelector('li.highlighted');
+            let currentIndex = currentHighlighted ? items.indexOf(currentHighlighted) : -1;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                currentIndex = (currentIndex + 1) % items.length;
+                highlightItem(items[currentIndex], currentFocusedSection);
+                if (items[currentIndex]._previewAction) {
+                    items[currentIndex]._previewAction();
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                currentIndex = currentIndex <= 0 ? items.length - 1 : currentIndex - 1;
+                highlightItem(items[currentIndex], currentFocusedSection);
+                if (items[currentIndex]._previewAction) {
+                    items[currentIndex]._previewAction();
+                }
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (currentHighlighted && currentHighlighted._action) {
+                    currentHighlighted._action();
+                }
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                switchSection('left');
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                switchSection('right');
+            }
+        });
+
+        function switchSection(direction) {
+            const sections = ['folderList', 'actressList', 'fileList', 'actressWorks'];
+            const currentIndex = sections.indexOf(currentFocusedSection);
+
+            let newIndex;
+            if (direction === 'left') {
+                if (currentIndex === 0 || currentIndex === 2) {
+                    newIndex = currentIndex + 1;
+                } else {
+                    newIndex = currentIndex - 1;
+                }
+            } else if (direction === 'right') {
+                if (currentIndex === 1 || currentIndex === 3) {
+                    newIndex = currentIndex - 1;
+                } else {
+                    newIndex = currentIndex + 1;
+                }
+            }
+
+            if (newIndex >= 0 && newIndex < sections.length) {
+                currentFocusedSection = sections[newIndex];
+                const list = document.getElementById(currentFocusedSection);
+
+                let highlightedItem = list.querySelector('li.highlighted');
+                if (!highlightedItem) {
+                    highlightedItem = list.querySelector('li');
+                }
+
+                if (highlightedItem) {
+                    highlightItem(highlightedItem, currentFocusedSection);
+                    if (highlightedItem._previewAction) {
+                        highlightedItem._previewAction();
+                    }
+                }
+            }
+        }
+
         const poster = document.getElementById("poster");
         poster.addEventListener("click", (e) => {
             e.stopPropagation();
             poster.classList.toggle("enlarged");
         });
 
-        // 點擊空白區縮回
-        document.body.addEventListener("click", () => {
-            poster.classList.remove("enlarged");
+        document.body.addEventListener("click", (e) => {
+            if (e.target === document.body || e.target.classList.contains('container')) {
+                poster.classList.remove("enlarged");
+            }
         });
 
-        // 自動載入預設資料夾
         window.addEventListener('DOMContentLoaded', () => {
             loadFolders();
+            const darkMode = localStorage.getItem('darkMode') === 'true';
+            if (darkMode) {
+                document.body.classList.add('dark-mode');
+            }
+            // 載入儀表板狀態
+            const dashboardCollapsed = localStorage.getItem('dashboardCollapsed') === 'true';
+            if (dashboardCollapsed) {
+                document.getElementById('dashboard').classList.add('collapsed');
+            }
+            // 初始化儀表板
+            updateDashboard();
         });
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+            // 更新儀表板圖表
+            updateDashboard();
+        }
+
+        function toggleDashboard() {
+            const dashboard = document.getElementById('dashboard');
+            dashboard.classList.toggle('collapsed');
+            const isCollapsed = dashboard.classList.contains('collapsed');
+            localStorage.setItem('dashboardCollapsed', isCollapsed);
+        }
+
+        function updateDashboard() {
+            // 計算統計數據
+            const stats = calculateDashboardStats();
+
+            // 更新統計卡片
+            document.getElementById('stat-total-movies').textContent = stats.totalMovies;
+            document.getElementById('stat-total-actresses').textContent = stats.totalActresses;
+            document.getElementById('stat-total-folders').textContent = stats.totalFolders;
+            document.getElementById('stat-total-plays').textContent = stats.totalPlays;
+            document.getElementById('stat-today-plays').textContent = stats.todayPlays;
+            document.getElementById('stat-week-plays').textContent = stats.weekPlays;
+            document.getElementById('stat-month-plays').textContent = stats.monthPlays;
+            document.getElementById('stat-avg-per-day').textContent = stats.avgPerDay;
+
+            // 更新最愛女優
+            const topActressesList = document.getElementById('top-actresses-quick');
+            topActressesList.innerHTML = '';
+            stats.topActresses.slice(0, 3).forEach((actress, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                        <span>${index + 1}. ${actress.name}</span>
+                        <span style="color: var(--highlight-color);">${actress.count}次</span>
+                    `;
+                topActressesList.appendChild(li);
+            });
+
+            if (stats.topActresses.length === 0) {
+                topActressesList.innerHTML = '<li style="color: var(--text-secondary);">暫無數據</li>';
+            }
+
+            // 更新最近熱門
+            const recentHotList = document.getElementById('recent-hot-quick');
+            recentHotList.innerHTML = '';
+            stats.recentHot.slice(0, 3).forEach((movie, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                        <span>${index + 1}. ${movie.actress}</span>
+                        <span style="color: var(--highlight-color);">${movie.count}次</span>
+                    `;
+                li.title = movie.fileName;
+                recentHotList.appendChild(li);
+            });
+
+            if (stats.recentHot.length === 0) {
+                recentHotList.innerHTML = '<li style="color: var(--text-secondary);">暫無數據</li>';
+            }
+
+            // 更新觀看習慣
+            document.getElementById('peak-hour').textContent = stats.peakHour;
+            document.getElementById('fav-genre').textContent = stats.favGenre;
+            document.getElementById('avg-rating').textContent = stats.avgRating;
+
+            // 更新迷你趨勢圖
+            updateMiniTrendChart(stats.last7Days);
+        }
+
+        function calculateDashboardStats() {
+            const now = Date.now();
+            const oneDayAgo = now - 24 * 60 * 60 * 1000;
+            const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
+            const oneMonthAgo = now - 30 * 24 * 60 * 60 * 1000;
+
+            // 收集所有播放記錄
+            const allPlays = [];
+            let totalPlays = 0;
+            const movieCount = Object.keys(movieStats).length;
+
+            for (const key in movieStats) {
+                const data = movieStats[key];
+                if (typeof data === 'object' && data.playDates) {
+                    allPlays.push(...data.playDates);
+                    totalPlays += data.count || 0;
+                } else if (typeof data === 'number') {
+                    totalPlays += data;
+                }
+            }
+
+            // 今日、本週、本月播放次數
+            const todayPlays = allPlays.filter(t => t >= oneDayAgo).length;
+            const weekPlays = allPlays.filter(t => t >= oneWeekAgo).length;
+            const monthPlays = allPlays.filter(t => t >= oneMonthAgo).length;
+
+            // 計算日均觀看
+            const daysWithData = allPlays.length > 0 ?
+                Math.max(1, Math.ceil((now - Math.min(...allPlays)) / (24 * 60 * 60 * 1000))) : 0;
+            const avgPerDay = daysWithData > 0 ? (totalPlays / daysWithData).toFixed(1) : '0';
+
+            // 最愛女優 Top 3
+            const topActresses = Object.entries(actressStats)
+                .map(([name, count]) => ({ name, count }))
+                .sort((a, b) => b.count - a.count);
+
+            // 最近熱門（本週）
+            const recentHot = [];
+            for (const key in movieStats) {
+                const data = movieStats[key];
+                if (data.playDates && Array.isArray(data.playDates)) {
+                    const recentCount = data.playDates.filter(t => t >= oneWeekAgo).length;
+                    if (recentCount > 0) {
+                        const fileName = data.path.split('\\').pop().split('/').pop();
+                        const actress = extractActressFromPath(data.path);
+                        recentHot.push({ fileName, actress, count: recentCount });
+                    }
+                }
+            }
+            recentHot.sort((a, b) => b.count - a.count);
+
+            // 最活躍時段
+            const hourlyCount = new Array(24).fill(0);
+            allPlays.forEach(timestamp => {
+                const hour = new Date(timestamp).getHours();
+                hourlyCount[hour]++;
+            });
+            const peakHourIndex = hourlyCount.indexOf(Math.max(...hourlyCount));
+            const peakHour = hourlyCount[peakHourIndex] > 0 ?
+                `${peakHourIndex}:00 - ${peakHourIndex + 1}:00` : '--';
+
+            // 最近7天趨勢
+            const last7Days = [];
+            for (let i = 6; i >= 0; i--) {
+                const dayStart = now - i * 24 * 60 * 60 * 1000;
+                const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+                const count = allPlays.filter(t => t >= dayStart && t < dayEnd).length;
+                last7Days.push(count);
+            }
+
+            return {
+                totalMovies: movieCount,
+                totalActresses: Object.keys(actressDictGlobal).length,
+                totalFolders: foldersGlobal.length,
+                totalPlays: totalPlays,
+                todayPlays: todayPlays,
+                weekPlays: weekPlays,
+                monthPlays: monthPlays,
+                avgPerDay: avgPerDay,
+                topActresses: topActresses,
+                recentHot: recentHot,
+                peakHour: peakHour,
+                favGenre: '基於女優分析',  // 可以後續擴展
+                avgRating: totalPlays > 0 ? '⭐⭐⭐⭐' : '--',
+                last7Days: last7Days
+            };
+        }
+
+        let miniChart;
+        function updateMiniTrendChart(data) {
+            const isDark = document.body.classList.contains('dark-mode');
+            const textColor = isDark ? '#e0e0e0' : '#333333';
+            const gridColor = isDark ? '#444444' : '#e0e0e0';
+
+            const labels = [];
+            const now = new Date();
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+                labels.push(`${date.getMonth() + 1}/${date.getDate()}`);
+            }
+
+            if (miniChart) miniChart.destroy();
+            const ctx = document.getElementById('miniTrendChart').getContext('2d');
+            miniChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '觀看次數',
+                        data: data,
+                        borderColor: '#4a90e2',
+                        backgroundColor: 'rgba(74, 144, 226, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: textColor,
+                                stepSize: 1
+                            },
+                            grid: { color: gridColor }
+                        },
+                        x: {
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        }
+                    }
+                }
+            });
+        }
+
+        function addToHistory(historyArray, item, storageKey) {
+            const index = historyArray.indexOf(item);
+            if (index > -1) {
+                historyArray.splice(index, 1);
+            }
+            historyArray.unshift(item);
+            if (historyArray.length > 20) {
+                historyArray.pop();
+            }
+            localStorage.setItem(storageKey, JSON.stringify(historyArray));
+        }
+
+        function showHistory() {
+            const overlay = document.getElementById('historyOverlay');
+            overlay.style.display = 'flex';
+
+            const folderHistoryDiv = document.getElementById('folderHistory');
+            folderHistoryDiv.innerHTML = '';
+            if (folderHistory.length === 0) {
+                folderHistoryDiv.innerHTML = '<p style="color: var(--text-secondary);">尚無瀏覽記錄</p>';
+            } else {
+                folderHistory.forEach((folder, index) => {
+                    const item = document.createElement('div');
+                    item.style.cssText = `
+                            padding: 8px;
+                            margin: 4px 0;
+                            background-color: var(--bg-secondary);
+                            border-radius: 4px;
+                            cursor: pointer;
+                            transition: background-color 0.2s;
+                        `;
+                    item.textContent = `${index + 1}. ${folder}`;
+                    item.onclick = () => {
+                        closeHistory();
+                        loadFiles(folder);
+                        const folderList = document.getElementById('folderList');
+                        const items = folderList.querySelectorAll('li');
+                        for (const li of items) {
+                            if (li.textContent === folder) {
+                                highlightItem(li, 'folderList');
+                                break;
+                            }
+                        }
+                    };
+                    item.onmouseover = () => item.style.backgroundColor = 'var(--bg-hover)';
+                    item.onmouseout = () => item.style.backgroundColor = 'var(--bg-secondary)';
+                    folderHistoryDiv.appendChild(item);
+                });
+            }
+
+            const actressHistoryDiv = document.getElementById('actressHistory');
+            actressHistoryDiv.innerHTML = '';
+            if (actressHistory.length === 0) {
+                actressHistoryDiv.innerHTML = '<p style="color: var(--text-secondary);">尚無查看記錄</p>';
+            } else {
+                actressHistory.forEach((actress, index) => {
+                    const item = document.createElement('div');
+                    item.style.cssText = `
+                            padding: 8px;
+                            margin: 4px 0;
+                            background-color: var(--bg-secondary);
+                            border-radius: 4px;
+                            cursor: pointer;
+                            transition: background-color 0.2s;
+                        `;
+                    item.textContent = `${index + 1}. ${actress}`;
+                    item.onclick = () => {
+                        closeHistory();
+                        const actressList = document.getElementById('actressList');
+                        const items = actressList.querySelectorAll('li');
+                        for (const li of items) {
+                            if (li.textContent === actress) {
+                                highlightItem(li, 'actressList');
+                                showActressWorks(actress, true);
+                                break;
+                            }
+                        }
+                    };
+                    item.onmouseover = () => item.style.backgroundColor = 'var(--bg-hover)';
+                    item.onmouseout = () => item.style.backgroundColor = 'var(--bg-secondary)';
+                    actressHistoryDiv.appendChild(item);
+                });
+            }
+        }
+
+        function closeHistory(event) {
+            if (!event || event.target.id === 'historyOverlay') {
+                document.getElementById('historyOverlay').style.display = 'none';
+            }
+        }
+
+        function clearHistory() {
+            if (confirm('確定要清除所有搜尋歷史嗎？此操作無法復原！')) {
+                folderHistory = [];
+                actressHistory = [];
+                localStorage.removeItem('folderHistory');
+                localStorage.removeItem('actressHistory');
+                alert('搜尋歷史已清除！');
+                closeHistory();
+            }
+        }
+
+        function showStatistics() {
+            const overlay = document.getElementById('statsOverlay');
+            overlay.style.display = 'flex';
+            switchStatsTab('overview');
+            updateOverviewStats();
+        }
+
+        function switchStatsTab(tabName) {
+            document.querySelectorAll('.stats-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event?.target?.classList.add('active') ||
+                document.querySelector(`.stats-tab:nth-child(${tabName === 'overview' ? 1 :
+                        tabName === 'trends' ? 2 :
+                            tabName === 'rankings' ? 3 : 4
+                    })`).classList.add('active');
+
+            document.querySelectorAll('.stats-tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`stats-${tabName}`).classList.add('active');
+
+            if (tabName === 'trends') {
+                updateTrendsCharts();
+            } else if (tabName === 'rankings') {
+                updateRankings();
+            } else if (tabName === 'actress') {
+                updateActressStats();
+            }
+        }
+
+        function extractActressFromPath(filePath) {
+            for (const actress in actressDictGlobal) {
+                const folders = actressDictGlobal[actress];
+                for (const folder of folders) {
+                    if (filePath.includes(folder)) {
+                        return actress;
+                    }
+                }
+            }
+            const pathParts = filePath.replace(/\\/g, '/').split('/');
+            if (pathParts.length >= 2) {
+                return pathParts[pathParts.length - 2];
+            }
+            return '未知';
+        }
+
+        function updateOverviewStats() {
+            const movieTable = document.getElementById('movieStatsTable').getElementsByTagName('tbody')[0];
+            movieTable.innerHTML = '';
+
+            const movieEntries = [];
+            for (const key in movieStats) {
+                const data = movieStats[key];
+                if (typeof data === 'number') {
+                    movieEntries.push({
+                        fileName: key,
+                        actress: '未知',
+                        count: data,
+                        path: key
+                    });
+                } else if (typeof data === 'object' && data.count) {
+                    const fileName = data.path.split('\\').pop().split('/').pop();
+                    const actress = extractActressFromPath(data.path);
+                    movieEntries.push({
+                        fileName: fileName,
+                        actress: actress,
+                        count: data.count,
+                        path: data.path
+                    });
+                }
+            }
+
+            const sortedMovies = movieEntries
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 20);
+
+            sortedMovies.forEach((entry, index) => {
+                const row = movieTable.insertRow();
+                row.insertCell(0).textContent = index + 1;
+                row.insertCell(1).textContent = entry.actress;
+                row.insertCell(2).textContent = entry.fileName;
+                row.insertCell(3).textContent = entry.count;
+            });
+
+            if (sortedMovies.length === 0) {
+                const row = movieTable.insertRow();
+                const cell = row.insertCell(0);
+                cell.colSpan = 4;
+                cell.textContent = '尚無播放記錄';
+                cell.style.textAlign = 'center';
+                cell.style.color = '#999';
+            }
+
+            const actressTable = document.getElementById('actressStatsTable').getElementsByTagName('tbody')[0];
+            actressTable.innerHTML = '';
+            const sortedActresses = Object.entries(actressStats)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 20);
+
+            sortedActresses.forEach((entry, index) => {
+                const row = actressTable.insertRow();
+                row.insertCell(0).textContent = index + 1;
+                row.insertCell(1).textContent = entry[0];
+                row.insertCell(2).textContent = entry[1];
+            });
+
+            if (sortedActresses.length === 0) {
+                const row = actressTable.insertRow();
+                const cell = row.insertCell(0);
+                cell.colSpan = 3;
+                cell.textContent = '尚無查看記錄';
+                cell.style.textAlign = 'center';
+                cell.style.color = '#999';
+            }
+        }
+
+        let dailyChart, weeklyChart, hourlyChart;
+        function updateTrendsCharts() {
+            const isDark = document.body.classList.contains('dark-mode');
+            const textColor = isDark ? '#e0e0e0' : '#333333';
+            const gridColor = isDark ? '#444444' : '#e0e0e0';
+
+            const playDates = [];
+            for (const key in movieStats) {
+                const data = movieStats[key];
+                if (data.playDates && Array.isArray(data.playDates)) {
+                    playDates.push(...data.playDates);
+                }
+            }
+
+            const dailyData = {};
+            const now = Date.now();
+            const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
+
+            for (let i = 0; i < 30; i++) {
+                const date = new Date(now - i * 24 * 60 * 60 * 1000);
+                const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
+                dailyData[dateStr] = 0;
+            }
+
+            playDates.forEach(timestamp => {
+                if (timestamp >= thirtyDaysAgo) {
+                    const date = new Date(timestamp);
+                    const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
+                    if (dailyData[dateStr] !== undefined) {
+                        dailyData[dateStr]++;
+                    }
+                }
+            });
+
+            const dailyLabels = Object.keys(dailyData).reverse();
+            const dailyValues = Object.values(dailyData).reverse();
+
+            if (dailyChart) dailyChart.destroy();
+            const ctx1 = document.getElementById('dailyTrendChart').getContext('2d');
+            dailyChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: dailyLabels,
+                    datasets: [{
+                        label: '播放次數',
+                        data: dailyValues,
+                        borderColor: '#4a90e2',
+                        backgroundColor: 'rgba(74, 144, 226, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: textColor } }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        },
+                        x: {
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        }
+                    }
+                }
+            });
+
+            const weeklyData = {};
+            const twelveWeeksAgo = now - 12 * 7 * 24 * 60 * 60 * 1000;
+
+            for (let i = 0; i < 12; i++) {
+                const weekStr = `第${12 - i}週`;
+                weeklyData[weekStr] = 0;
+            }
+
+            playDates.forEach(timestamp => {
+                if (timestamp >= twelveWeeksAgo) {
+                    const weeksAgo = Math.floor((now - timestamp) / (7 * 24 * 60 * 60 * 1000));
+                    const weekStr = `第${12 - weeksAgo}週`;
+                    if (weeklyData[weekStr] !== undefined) {
+                        weeklyData[weekStr]++;
+                    }
+                }
+            });
+
+            const weeklyLabels = Object.keys(weeklyData);
+            const weeklyValues = Object.values(weeklyData);
+
+            if (weeklyChart) weeklyChart.destroy();
+            const ctx2 = document.getElementById('weeklyTrendChart').getContext('2d');
+            weeklyChart = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: weeklyLabels,
+                    datasets: [{
+                        label: '播放次數',
+                        data: weeklyValues,
+                        backgroundColor: '#4a90e2'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: textColor } }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        },
+                        x: {
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        }
+                    }
+                }
+            });
+
+            const hourlyData = new Array(24).fill(0);
+            playDates.forEach(timestamp => {
+                const hour = new Date(timestamp).getHours();
+                hourlyData[hour]++;
+            });
+
+            if (hourlyChart) hourlyChart.destroy();
+            const ctx3 = document.getElementById('hourlyChart').getContext('2d');
+            hourlyChart = new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                    labels: Array.from({ length: 24 }, (_, i) => `${i}:00`),
+                    datasets: [{
+                        label: '播放次數',
+                        data: hourlyData,
+                        backgroundColor: '#4a90e2'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: textColor } }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        },
+                        x: {
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateRankings() {
+            const now = Date.now();
+            const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
+            const oneMonthAgo = now - 30 * 24 * 60 * 60 * 1000;
+
+            const weeklyMovies = [];
+            for (const key in movieStats) {
+                const data = movieStats[key];
+                if (data.playDates && Array.isArray(data.playDates)) {
+                    const weeklyCount = data.playDates.filter(t => t >= oneWeekAgo).length;
+                    if (weeklyCount > 0) {
+                        const fileName = data.path.split('\\').pop().split('/').pop();
+                        const actress = extractActressFromPath(data.path);
+                        weeklyMovies.push({ fileName, actress, count: weeklyCount });
+                    }
+                }
+            }
+
+            const weeklyTable = document.getElementById('weeklyMovieRanking').getElementsByTagName('tbody')[0];
+            weeklyTable.innerHTML = '';
+            weeklyMovies.sort((a, b) => b.count - a.count).slice(0, 10).forEach((entry, index) => {
+                const row = weeklyTable.insertRow();
+                row.insertCell(0).textContent = index + 1;
+                row.insertCell(1).textContent = entry.actress;
+                row.insertCell(2).textContent = entry.fileName;
+                row.insertCell(3).textContent = entry.count;
+            });
+
+            if (weeklyMovies.length === 0) {
+                const row = weeklyTable.insertRow();
+                const cell = row.insertCell(0);
+                cell.colSpan = 4;
+                cell.textContent = '本週尚無播放記錄';
+                cell.style.textAlign = 'center';
+                cell.style.color = '#999';
+            }
+
+            const monthlyMovies = [];
+            for (const key in movieStats) {
+                const data = movieStats[key];
+                if (data.playDates && Array.isArray(data.playDates)) {
+                    const monthlyCount = data.playDates.filter(t => t >= oneMonthAgo).length;
+                    if (monthlyCount > 0) {
+                        const fileName = data.path.split('\\').pop().split('/').pop();
+                        const actress = extractActressFromPath(data.path);
+                        monthlyMovies.push({ fileName, actress, count: monthlyCount });
+                    }
+                }
+            }
+
+            const monthlyTable = document.getElementById('monthlyMovieRanking').getElementsByTagName('tbody')[0];
+            monthlyTable.innerHTML = '';
+            monthlyMovies.sort((a, b) => b.count - a.count).slice(0, 10).forEach((entry, index) => {
+                const row = monthlyTable.insertRow();
+                row.insertCell(0).textContent = index + 1;
+                row.insertCell(1).textContent = entry.actress;
+                row.insertCell(2).textContent = entry.fileName;
+                row.insertCell(3).textContent = entry.count;
+            });
+
+            if (monthlyMovies.length === 0) {
+                const row = monthlyTable.insertRow();
+                const cell = row.insertCell(0);
+                cell.colSpan = 4;
+                cell.textContent = '本月尚無播放記錄';
+                cell.style.textAlign = 'center';
+                cell.style.color = '#999';
+            }
+
+            const topRatedTable = document.getElementById('topRatedRanking').getElementsByTagName('tbody')[0];
+            topRatedTable.innerHTML = '';
+            const movieEntries = [];
+            for (const key in movieStats) {
+                const data = movieStats[key];
+                if (typeof data === 'object' && data.count) {
+                    const fileName = data.path.split('\\').pop().split('/').pop();
+                    const actress = extractActressFromPath(data.path);
+                    movieEntries.push({ fileName, actress, count: data.count });
+                }
+            }
+            movieEntries.sort((a, b) => b.count - a.count).slice(0, 10).forEach((entry, index) => {
+                const row = topRatedTable.insertRow();
+                row.insertCell(0).textContent = index + 1;
+                row.insertCell(1).textContent = entry.actress;
+                row.insertCell(2).textContent = entry.fileName;
+                row.insertCell(3).textContent = entry.count;
+                row.insertCell(4).textContent = '⭐'.repeat(Math.min(5, Math.ceil(entry.count / 2)));
+            });
+
+            if (movieEntries.length === 0) {
+                const row = topRatedTable.insertRow();
+                const cell = row.insertCell(0);
+                cell.colSpan = 5;
+                cell.textContent = '尚無播放記錄';
+                cell.style.textAlign = 'center';
+                cell.style.color = '#999';
+            }
+        }
+
+        let actressChart;
+        function updateActressStats() {
+            const actressData = {};
+            for (const actress in actressDictGlobal) {
+                actressData[actress] = {
+                    worksCount: actressDictGlobal[actress].length,
+                    totalPlays: 0,
+                    viewCount: actressStats[actress] || 0
+                };
+            }
+
+            for (const key in movieStats) {
+                const data = movieStats[key];
+                if (typeof data === 'object' && data.count) {
+                    const actress = extractActressFromPath(data.path);
+                    if (actress && actressData[actress]) {
+                        actressData[actress].totalPlays += data.count;
+                    }
+                }
+            }
+
+            const table = document.getElementById('actressDetailStats').getElementsByTagName('tbody')[0];
+            table.innerHTML = '';
+
+            const sortedActresses = Object.entries(actressData)
+                .map(([name, data]) => ({
+                    name,
+                    ...data,
+                    avgPlayRate: data.worksCount > 0 ? (data.totalPlays / data.worksCount).toFixed(2) : 0
+                }))
+                .sort((a, b) => b.totalPlays - a.totalPlays);
+
+            sortedActresses.forEach((entry, index) => {
+                const row = table.insertRow();
+                row.insertCell(0).textContent = index + 1;
+                row.insertCell(1).textContent = entry.name;
+                row.insertCell(2).textContent = entry.worksCount;
+                row.insertCell(3).textContent = entry.totalPlays;
+                row.insertCell(4).textContent = entry.viewCount;
+                row.insertCell(5).textContent = entry.avgPlayRate;
+            });
+
+            const isDark = document.body.classList.contains('dark-mode');
+            const textColor = isDark ? '#e0e0e0' : '#333333';
+            const gridColor = isDark ? '#444444' : '#e0e0e0';
+
+            const top10 = sortedActresses.slice(0, 10);
+
+            if (actressChart) actressChart.destroy();
+            const ctx = document.getElementById('actressViewChart').getContext('2d');
+            actressChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: top10.map(a => a.name),
+                    datasets: [{
+                        label: '查看次數',
+                        data: top10.map(a => a.viewCount),
+                        backgroundColor: '#4a90e2'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { labels: { color: textColor } }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        },
+                        y: {
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        }
+                    }
+                }
+            });
+        }
+
+        function closeStatistics(event) {
+            if (!event || event.target.id === 'statsOverlay') {
+                document.getElementById('statsOverlay').style.display = 'none';
+            }
+        }
+
+        function clearStatistics() {
+            if (confirm('確定要清除所有統計數據嗎？此操作無法復原！')) {
+                movieStats = {};
+                actressStats = {};
+                localStorage.removeItem('movieStats');
+                localStorage.removeItem('actressStats');
+                alert('統計數據已清除！');
+                closeStatistics();
+            }
+        }
     </script>
 
 </body>

@@ -29,7 +29,7 @@ async Task OpenBrowserAsync(string url)
 }
 
 // Call and wait
-await OpenBrowserAsync("http://localhost:5000");
+await OpenBrowserAsync("http://localhost:5122");
 
 // Start Web API
-app.Run("http://localhost:5000");
+app.Run("http://localhost:5122");
